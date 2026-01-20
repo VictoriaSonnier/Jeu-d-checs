@@ -13,8 +13,7 @@ for i in range(8):
 
 def display(color,pixels=None):
     if pixels is None:
-        pyxel.cls(color)
-
+        pyxel.cls(color
     else:
         for x,y in pixels:
             for i in range(5):
