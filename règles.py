@@ -3,22 +3,56 @@ from pathlib import Path
 
 TILE=16
 SIDE = 8
+BLACK=0
+WHITE=7
 PLACE=[k*16 for k in range(8)]
 
 class Chessboard:
-    def __init__(self):
-        pyxel.cls(0)
-        for y in range(SIDE):
-            for x in range(SIDE):
-                if (x + y) % 2 == 0:
-                    color = 7 
-                else:
-                    color = 5  
-        px = x * TILE
-        py = y * TILE
-        pyxel.rect(px, py, TILE, TILE, color)
-Chessboard()
+    def __init__(self): # constructeur
+        pyxel.init(SIDE*TILE, SIDE*TILE, title="Echecs") #allume l'écran de jeu
+        
+        
+        self.damier = []
+        for i in range(8):
+            for j in range(8):
+                if (i + j) % 2 == 0:
+                    self.damier.append((i, j))
+        
+        self.game_over = False
+        self.winner = "BLANC" 
+        
+        pyxel.run(self.update, self.draw) #détecte echec et mat
 
+    def display(self, color, pixels=None): #self indique que la fonction appartient la classe Chessboard().
+        if pixels is None:
+            pyxel.cls(color)
+        else:
+            for x, y in pixels:
+                pyxel.rect(x * TILE, y * TILE, TILE, TILE, color)
+
+    def update(self):
+        # game over pour test
+        if pyxel.btnp(pyxel.KEY_G):
+            self.game_over = True
+        
+        # R pour rejouer
+        if self.game_over and pyxel.btnp(pyxel.KEY_R):
+            self.game_over = False
+            
+
+    def draw(self):
+        self.display(BLACK) #trace d'abord le fond noir
+        self.display(WHITE, self.damier) #damier blanc
+        
+        if self.game_over:
+            pyxel.rect(1, 10, 38, 26, 6)
+            pyxel.rectb(1, 10, 38, 26, 7)
+
+            pyxel.text(12, 13, "GAME", 5) 
+            pyxel.text(12, 20, "OVER", 5) 
+
+            pyxel.text(2, 27, f"GAGNANT:{self.winner[0]}", 5)
+Chessboard()
 
 
 class Piece:
@@ -59,8 +93,6 @@ class Game:
         ]
 
     def start(self):
-        pyxel.init(TILE*SIDE,TILE*SIDE,title='Echiquier')
-        pyxel.load('res.pyxres')
         pyxel.run(self.update,self.draw)
 
     def update(self):
