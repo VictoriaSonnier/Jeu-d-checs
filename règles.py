@@ -21,7 +21,6 @@ class Chessboard:
         self.game_over = False
         self.winner = "BLANC" 
         
-        pyxel.run(self.update, self.draw) #détecte echec et mat
 
     def display(self, color, pixels=None): #self indique que la fonction appartient la classe Chessboard().
         if pixels is None:
@@ -52,7 +51,6 @@ class Chessboard:
             pyxel.text(12, 20, "OVER", 5) 
 
             pyxel.text(2, 27, f"GAGNANT:{self.winner[0]}", 5)
-Chessboard()
 
 
 class Piece:
@@ -62,35 +60,33 @@ class Piece:
 
 class Pawn(Piece):
     def draw(self):
-        pyxel.blt(self.x*SIDE,self.y*SIDE,0,0,0,16,16,0,0)
+        pyxel.blt(self.x*TILE,self.y*TILE,0,0,0,16,16,0,0)
 
 class Rook(Piece):
     def draw(self):
-        pyxel.blt(self.x*SIDE,self.y*SIDE,0,16,0,16,16,0,0)
+        pyxel.blt(self.x*TILE,self.y*TILE,0,16,0,16,16,0,0)
 
 class Bishop(Piece):
     def draw(self):
-        pyxel.blt(self.x*SIDE,self.y*SIDE,0,32,0,16,16,0,0)
+        pyxel.blt(self.x*TILE,self.y*TILE,0,32,0,16,16,0,0)
 
 class Knight(Piece):
     def draw(self):
-        pyxel.blt(self.x*SIDE,self.y*SIDE,0,48,0,16,16,0,0)
+        pyxel.blt(self.x*TILE,self.y*TILE,0,48,0,16,16,0,0)
 
 class King(Piece):
     def draw(self):
-        pyxel.blt(self.x*SIDE,self.y*SIDE,0,64,0,16,16,0,0)
+        pyxel.blt(self.x*TILE,self.y*TILE,0,64,0,16,16,0,0)
 
 class Queen(Piece):
     def draw(self):
-        pyxel.blt(self.x*SIDE,self.y*SIDE,0,80,0,16,16,0,0)
+        pyxel.blt(self.x*TILE,self.y*TILE,0,80,0,16,16,0,0)
 
 class Game:
     def __init__(self):
         self.chessboard=Chessboard()
-        self.pieces = [
-            ( Pawn(1*TILE, k*TILE) for k in range(SIDE)),
-            ( Pawn(7*TILE, k*TILE) for k in range(SIDE))
-        ]
+        self.pieces = [Pawn(1, k) for k in range(SIDE)] + \
+              [Pawn(6, k) for k in range(SIDE)]
 
     def start(self):
         pyxel.run(self.update,self.draw)
@@ -106,7 +102,6 @@ class Game:
 
 game = Game()
 game.start()
-pyxel.show()
 
 
 
