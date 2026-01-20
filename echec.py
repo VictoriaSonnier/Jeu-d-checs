@@ -1,7 +1,7 @@
 import pyxel
 from pathlib import Path
-WIDTH=8
-HEIGHT=8
+WIDTH=40
+HEIGHT=40
 BLACK=0
 WHITE=7
 #o, crée le damier
@@ -17,7 +17,10 @@ def display(color,pixels=None):
 
     else:
         for x,y in pixels:
-            pyxel.pset(x,y, color)
+            for i in range(5):
+                for j in range(5):
+                    pyxel.pset(x*5+i,y*5+j, color)
+
 def draw_damier(maze):
     display(BLACK)
     display(WHITE,damier)
