@@ -42,6 +42,14 @@ class Knight(Piece):
     def draw(self):
         pyxel.blt(self.x*SIDE,self.y*SIDE,0,48,0,16,16,0,0)
 
+class King(Piece):
+    def draw(self):
+        pyxel.blt(self.x*SIDE,self.y*SIDE,0,64,0,16,16,0,0)
+
+class Queen(Piece):
+    def draw(self):
+        pyxel.blt(self.x*SIDE,self.y*SIDE,0,80,0,16,16,0,0)
+
 class Game:
     def __init__(self):
         self.chessboard=Chessboard()
@@ -52,7 +60,7 @@ class Game:
 
     def start(self):
         pyxel.init(TILE*SIDE,TILE*SIDE,title='Echiquier')
-        pyxel.load(res.pyxres)
+        pyxel.load('res.pyxres')
         pyxel.run(self.update,self.draw)
 
     def update(self):
@@ -66,6 +74,7 @@ class Game:
 
 game = Game()
 game.start()
+pyxel.show()
 
 
 
