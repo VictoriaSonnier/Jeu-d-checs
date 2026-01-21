@@ -30,7 +30,15 @@ class Chessboard:
             pyxel.rect(30, 50, 70, 30, 6)
             pyxel.rectb(30, 50, 70, 30, 7)
             pyxel.text(50, 55, "GAME OVER", 0)
+class Valid:
+    def __init__(self):
+        self.moves = [] 
 
+    def clear(self):
+        self.moves = []
+
+    def add(self, x, y):
+        self.moves.append((x, y))
 class Piece:
     def __init__(self, x, y, u, bot=False):
         self.x = x
@@ -45,6 +53,29 @@ class Piece:
 class Pawn(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 0, bot)
+        
+    def valid_moves(self, pieces):
+        moves = []
+        direction = 1 if self.is_bottom_player else -1
+
+        nx = self.x
+        ny = self.y + direction
+
+        if not any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+
+        nx = self.x - 1
+        ny = self.y + direction
+        if any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+
+        nx = self.x + 1
+        ny = self.y + direction
+        if any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+
+        return moves
+
 
 class Rook(Piece):
     def __init__(self, x, y, bot=False):
@@ -111,8 +142,9 @@ class Game:
             x = pyxel.mouse_x // TILE 
             y = pyxel.mouse_y // TILE 
             if self.p is None: 
-                self.p = self.is_occupied(x, y) 
-            else: 
+                self.p = self.is_occupied(x, y)
+                self.valid.clear() 
+            elif (x,y) in p.valid_moves(self.pieces): 
                 self.p.x = x 
                 self.p.y = y 
                 self.p = None 
