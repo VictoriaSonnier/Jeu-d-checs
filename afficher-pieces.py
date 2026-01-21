@@ -6,6 +6,7 @@ BLACK = 0
 WHITE = 7
 CREME = 15
 
+
 class Chessboard:
     def __init__(self):
         self.damier = []
@@ -32,41 +33,133 @@ class Chessboard:
             pyxel.text(50, 55, "GAME OVER", 0)
 
 class Piece:
-    def __init__(self, x, y, u, is_bottom_player=False):
+    def __init__(self, x, y, u, bot=False):
         self.x = x
         self.y = y
         self.u = u
-        self.is_bottom_player = is_bottom_player
+        self.v = 16 if bot else 0
+        self.is_bottom_player = bot
 
     def draw(self):
-        if self.is_bottom_player:
-            pyxel.pal(12, CREME)  # <- ici, on remplace le bleu (12) par crème
-        pyxel.blt(self.x * TILE, self.y * TILE, 0, self.u, 0, 16, 16, 0)
-        pyxel.pal()
+        pyxel.blt(self.x * TILE, self.y * TILE, 0, self.u, self.v, 16, 16, 0)
+
+class Valid:
+    def __init__(self):
+        self.moves = [] 
+
+    def clear(self):
+        self.moves = []
+
+    def add(self, x, y):
+        self.moves.append((x, y))
+
 
 class Pawn(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 0, bot)
 
+    def valid_moves(self, pieces):
+        moves = []
+    
+        direction = -1 if self.is_bottom_player else 1
+
+        
+        nx, ny = self.x, self.y + direction
+        if 0 <= ny <= 7:
+            if not any(p.x == nx and p.y == ny for p in pieces):
+                moves.append((nx, ny))
+                
+                
+                y_depart = 6 if self.is_bottom_player else 1
+                if self.y == y_depart:
+                    nx2, ny2 = self.x, self.y + 2 * direction
+                    if not any(p.x == nx2 and p.y == ny2 for p in pieces):
+                        moves.append((nx2, ny2))
+
+        
+        for dx in [-1, 1]:
+            nx, ny = self.x + dx, self.y + direction
+            if 0 <= nx <= 7 and 0 <= ny <= 7:
+                
+                cible = next((p for p in pieces if p.x == nx and p.y == ny), None)
+                # On ne l'ajoute que si c'est un ENNEMI
+                if cible and cible.is_bottom_player != self.is_bottom_player:
+                    moves.append((nx, ny))
+
+        return moves
+
+
 class Rook(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 16, bot)
 
+    def valid_moves(self,pieces):
+        moves=[]
+        dir=[(-1,0),(1,0),(0,-1),(0,1)]
+        for dx, dy in dir:
+            x = self.x
+            y = self.y
+            while True:
+                x += dx
+                y += dy
+                if not (0<=x<8) and (0<=y<8):
+                    break
+            if 
+
+    
+
 class Knight(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 32, bot)
-
+    
 class Bishop(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 48, bot)
+    
+    def valid_moves(self, pieces):
+        moves = []
+        directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+        for dx, dy in directions:
+            x, y = self.x, self.y
+            while True:
+                x += dx
+                y += dy
+                if not (0 <= x < 8 and 0 <= y < 8):
+                    break
+                cible = next((p for p in pieces if p.x == x and p.y == y), None)
+                if cible:
+                    if cible.is_bottom_player != self.is_bottom_player:
+                        moves.append((x, y))
+                    break
+                moves.append((x, y))
+        return moves
 
 class Queen(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 64, bot)
+    
+    def valid_moves(self, pieces):
+        moves = []
+        directions = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)]
+        for dx, dy in directions:
+            x, y = self.x, self.y
+            while True:
+                x += dx
+                y += dy
+                if not (0 <= x < 8 and 0 <= y < 8):
+                    break
+                cible = next((p for p in pieces if p.x == x and p.y == y), None)
+                if cible:
+                    if cible.is_bottom_player != self.is_bottom_player:
+                        moves.append((x, y))
+                    break
+                moves.append((x, y))
+        return moves
 
 class King(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 80, bot)
+
 
 class Game:
     def __init__(self):
@@ -78,6 +171,8 @@ class Game:
 
         self.chessboard = Chessboard()
         self.pieces = []
+        self.valid = Valid()
+        self.selected_piece = None
 
         self.pieces += [Pawn(i, 1) for i in range(SIDE)]
         self.pieces += [
@@ -96,11 +191,20 @@ class Game:
 
     def update(self):
         self.chessboard.update()
+        for p in self.pieces:
+            self.valid.clear()
+            for x, y in p.valid_moves(self.pieces):
+                self.valid.add(x, y)
+
+            
 
     def draw(self):
         self.chessboard.draw()
         for piece in self.pieces:
             piece.draw()
+
+
+
 
 game = Game()
 game.start()
