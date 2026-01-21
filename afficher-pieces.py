@@ -88,17 +88,60 @@ class Game:
             Rook(0, 7, True), Knight(1, 7, True), Bishop(2, 7, True), Queen(3, 7, True),
             King(4, 7, True), Bishop(5, 7, True), Knight(6, 7, True), Rook(7, 7, True)
         ]
+        pyxel.mouse(visible=True)
+        self.p=None
+        
+    
+                    
+
+        
+    
 
     def start(self):
         pyxel.run(self.update, self.draw)
+    
+    def is_occupied(self,x,y):
+        for p in self.pieces:
+            if p.x==x and p.y==y:
+                return p
+        return None
+    
+
 
     def update(self):
-        self.chessboard.update()
-
+        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
+            x=pyxel.mouse_x//TILE
+            y=pyxel.mouse_y//TILE
+            p=self.is_occupied(x,y)
+            if p!=None:
+                if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
+                    x1=pyxel.mouse_x//TILE
+                    y1=pyxel.mouse_y//TILE
+                    p.x=x1
+                    p.y=y1
+                   # if (self.x1,self.y1) in self.p(Piece).valid_moves:
+    def update(self): 
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT): # clic unique 
+            x = pyxel.mouse_x // TILE 
+            y = pyxel.mouse_y // TILE 
+            if self.p is None: 
+                self.p = self.is_occupied(x, y) 
+            else: 
+                self.p.x = x 
+                self.p.y = y 
+                self.p = None 
     def draw(self):
         self.chessboard.draw()
         for piece in self.pieces:
             piece.draw()
+
+
+
+
+            
+
+
+
 
 game = Game()
 game.start()
