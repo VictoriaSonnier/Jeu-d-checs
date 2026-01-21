@@ -106,20 +106,6 @@ class Game:
                 return p
         return None
     
-
-
-    def update(self):
-        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
-            x=pyxel.mouse_x//TILE
-            y=pyxel.mouse_y//TILE
-            p=self.is_occupied(x,y)
-            if p!=None:
-                if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
-                    x1=pyxel.mouse_x//TILE
-                    y1=pyxel.mouse_y//TILE
-                    p.x=x1
-                    p.y=y1
-                   # if (self.x1,self.y1) in self.p(Piece).valid_moves:
     def update(self): 
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT): # clic unique 
             x = pyxel.mouse_x // TILE 
