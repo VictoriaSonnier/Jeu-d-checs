@@ -31,7 +31,15 @@ class Chessboard:
             pyxel.rect(30, 50, 70, 30, 6)
             pyxel.rectb(30, 50, 70, 30, 7)
             pyxel.text(50, 55, "GAME OVER", 0)
+class Valid:
+    def __init__(self):
+        self.moves = [] 
 
+    def clear(self):
+        self.moves = []
+
+    def add(self, x, y):
+        self.moves.append((x, y))
 class Piece:
     def __init__(self, x, y, u, bot=False):
         self.x = x
@@ -42,6 +50,7 @@ class Piece:
 
     def draw(self):
         pyxel.blt(self.x * TILE, self.y * TILE, 0, self.u, self.v, 16, 16, 0)
+<<<<<<< HEAD
 
 class Valid:
     def __init__(self):
@@ -53,10 +62,35 @@ class Valid:
     def add(self, x, y):
         self.moves.append((x, y))
 
+=======
+>>>>>>> 5d040026fb3d1889975636f6e57e1cd96b059d84
 
 class Pawn(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 0, bot)
+        
+    def valid_moves(self, pieces):
+        moves = []
+        direction = 1 if self.is_bottom_player else -1
+
+        nx = self.x
+        ny = self.y + direction
+
+        if not any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+
+        nx = self.x - 1
+        ny = self.y + direction
+        if any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+
+        nx = self.x + 1
+        ny = self.y + direction
+        if any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+
+        return moves
+
 
     def valid_moves(self, pieces):
         moves = []
@@ -185,9 +219,18 @@ class Game:
             Rook(0, 7, True), Knight(1, 7, True), Bishop(2, 7, True), Queen(3, 7, True),
             King(4, 7, True), Bishop(5, 7, True), Knight(6, 7, True), Rook(7, 7, True)
         ]
+        pyxel.mouse(visible=True)
+        self.p=None
+        
+    
+                    
+
+        
+    
 
     def start(self):
         pyxel.run(self.update, self.draw)
+<<<<<<< HEAD
 
     def update(self):
         self.chessboard.update()
@@ -198,6 +241,26 @@ class Game:
 
             
 
+=======
+    
+    def is_occupied(self,x,y):
+        for p in self.pieces:
+            if p.x==x and p.y==y:
+                return p
+        return None
+    
+    def update(self): 
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT): # clic unique 
+            x = pyxel.mouse_x // TILE 
+            y = pyxel.mouse_y // TILE 
+            if self.p is None: 
+                self.p = self.is_occupied(x, y)
+                self.valid.clear() 
+            elif (x,y) in p.valid_moves(self.pieces): 
+                self.p.x = x 
+                self.p.y = y 
+                self.p = None 
+>>>>>>> 5d040026fb3d1889975636f6e57e1cd96b059d84
     def draw(self):
         self.chessboard.draw()
         for piece in self.pieces:
@@ -206,5 +269,13 @@ class Game:
 
 
 
+<<<<<<< HEAD
+=======
+            
+
+
+
+
+>>>>>>> 5d040026fb3d1889975636f6e57e1cd96b059d84
 game = Game()
 game.start()
