@@ -32,17 +32,15 @@ class Chessboard:
             pyxel.text(50, 55, "GAME OVER", 0)
 
 class Piece:
-    def __init__(self, x, y, u, is_bottom_player=False):
+    def __init__(self, x, y, u, bot=False):
         self.x = x
         self.y = y
         self.u = u
-        self.is_bottom_player = is_bottom_player
+        self.v = 16 if bot else 0
+        self.is_bottom_player = bot
 
     def draw(self):
-        if self.is_bottom_player:
-            pyxel.pal(12, CREME)  # <- ici, on remplace le bleu (12) par crème
-        pyxel.blt(self.x * TILE, self.y * TILE, 0, self.u, 0, 16, 16, 0)
-        pyxel.pal()
+        pyxel.blt(self.x * TILE, self.y * TILE, 0, self.u, self.v, 16, 16, 0)
 
 class Pawn(Piece):
     def __init__(self, x, y, bot=False):
