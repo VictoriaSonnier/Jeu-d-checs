@@ -187,7 +187,12 @@ class King(Piece):
                     moves.append((x, y))
 
         return moves
-
+    def echec_au_roi(self,pieces):
+        for p in pieces:
+            if p.is_bottom_player!=self.is_bottom_player:
+                if (self.x,self.y) in  p.valid_moves(pieces):
+                    return True
+        return False
 
 
 class Game:
@@ -242,10 +247,18 @@ class Game:
             
             if (x,y) in self.valid.moves:
                 target = self.is_occupied(x, y)
+                x1=self.p.x
+                y1=self.p.y
                 if target and target.is_bottom_player != self.p.is_bottom_player:
                     self.pieces.remove(target)
                 self.p.x = x 
-                self.p.y = y 
+                self.p.y = y
+                for p1 in self.pieces:
+                    if isinstance(p1,King) and p1.is_bottom_player==self.p.is_bottom_player:
+                        if p1.echec_au_roi(self.pieces):
+                            self.p.x=x1
+                            self.p.y=y1
+
             self.p = None 
             self.valid.clear()
 
