@@ -59,20 +59,24 @@ class Pawn(Piece):
         
     def valid_moves(self, pieces):
         moves = []
-        direction = -1 if self.is_bottom_player else 1 # Inversion logique selon le sens
+        direction = -1 if self.is_bottom_player else 1
 
-        # Avancer d'une case (seulement si vide)
-        nx, ny = self.x, self.y + direction
-        if 0 <= ny < 8 and not any(p.x == nx and p.y == ny for p in pieces):
+        nx = self.x
+        ny = self.y + direction
+
+        if not any(p.x == nx and p.y == ny for p in pieces):
             moves.append((nx, ny))
 
-        # Captures diagonales (seulement si occupé par l'ennemi)
-        for dx in [-1, 1]:
-            nx, ny = self.x + dx, self.y + direction
-            if 0 <= nx < 8 and 0 <= ny < 8:
-                target = next((p for p in pieces if p.x == nx and p.y == ny), None)
-                if target and target.is_bottom_player != self.is_bottom_player:
-                    moves.append((nx, ny))
+        nx = self.x - 1
+        ny = self.y + direction
+        if any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+
+        nx = self.x + 1
+        ny = self.y + direction
+        if any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+
         return moves
 
 class Rook(Piece):
@@ -104,7 +108,7 @@ class Rook(Piece):
 
 class Knight(Piece):
     def __init__(self, x, y, bot=False):
-        super().__init__(x, y, 32, bot)
+        super().__init__(x, y, 48, bot)
 
     def valid_moves(self, pieces):
         moves = []
@@ -123,7 +127,7 @@ class Knight(Piece):
     
 class Bishop(Piece):
     def __init__(self, x, y, bot=False):
-        super().__init__(x, y, 48, bot)
+        super().__init__(x, y, 32, bot)
     
     def valid_moves(self, pieces):
         moves = []
@@ -146,7 +150,7 @@ class Bishop(Piece):
 
 class Queen(Piece):
     def __init__(self, x, y, bot=False):
-        super().__init__(x, y, 64, bot)
+        super().__init__(x, y, 80, bot)
     
     def valid_moves(self, pieces):
         moves = []
@@ -169,7 +173,7 @@ class Queen(Piece):
 
 class King(Piece):
     def __init__(self, x, y, bot=False):
-        super().__init__(x, y, 80, bot)
+        super().__init__(x, y, 64, bot)
 
     def valid_moves(self, pieces):
         moves = []
@@ -189,7 +193,7 @@ class King(Piece):
 
 class Game:
     def __init__(self):
-        self.turn=1
+        self.turn=1 # Ajout de la gestion du tour
         pyxel.init(SIDE * TILE, SIDE * TILE, title="Echecs")
         try:
             pyxel.load("res.pyxres")
@@ -209,8 +213,8 @@ class Game:
 
         self.pieces += [Pawn(i, 6, True) for i in range(SIDE)]
         self.pieces += [
-            Rook(0, 7, True), Knight(1, 7, True), Bishop(2, 7, True), Queen(3, 7, True),
-            King(4, 7, True), Bishop(5, 7, True), Knight(6, 7, True), Rook(7, 7, True)
+            Rook(0, 7, True), Knight(2, 7, True), Bishop(1, 7, True), Queen(3, 7, True),
+            King(4, 7, True), Bishop(6, 7, True), Knight(5, 7, True), Rook(7, 7, True)
         ]
         pyxel.mouse(visible=True)
         self.p=None
@@ -230,42 +234,44 @@ class Game:
             y = pyxel.mouse_y // TILE 
 
             if self.p is None: 
-                piece = self.is_occupied(x, y)
-                # On ne sélectionne que si c'est le tour du joueur (bot=True/False)
-                if piece and piece.is_bottom_player == bool(self.turn):
-                    self.p = piece
+                temp_p = self.is_occupied(x, y)
+                # On ne sélectionne que si c'est le tour du bon joueur
+                if temp_p and temp_p.is_bottom_player == (self.turn == 1):
+                    self.p = temp_p
                     self.valid.moves = self.p.valid_moves(self.pieces)
+                else:
+                    self.valid.clear()
+                return
             
-            else:
-                if (x, y) in self.valid.moves:
-                    target = self.is_occupied(x, y)
-                    if target:
-                        self.pieces.remove(target)
-                    self.p.x = x 
-                    self.p.y = y 
-                    
-                    # CHANGEMENT DE TOUR après un mouvement réussi
-                    self.turn = 1 - self.turn 
+            # Si une pièce est déjà sélectionnée, on tente le mouvement
+            if (x, y) in self.valid.moves:
+                target = self.is_occupied(x, y)
+                if target and target.is_bottom_player != self.p.is_bottom_player:
+                    self.pieces.remove(target)
                 
-                self.p = None 
-                self.valid.clear()
+                self.p.x = x 
+                self.p.y = y 
+                # Changement de tour
+                self.turn = 1 - self.turn 
+
+            # Reset de la sélection après l'action
+            self.p = None 
+            self.valid.clear()
 
     def draw(self):
         self.chessboard.draw()
         
-        # Affichage du tour
-        texte = "TOUR: BAS" if self.turn == 1 else "TOUR: HAUT"
-        couleur = 7 if self.turn == 1 else 13
-        pyxel.text(5, 5, texte, couleur)
+       
+        pyxel.rect(0, 0, 50, 10, 0) 
+        pyxel.rectb(0, 0, 50, 10, 7) 
 
-        # Mouvements valides (optionnel mais recommandé)
-        for mx, my in self.valid.moves:
-            pyxel.circ(mx * TILE + 8, my * TILE + 8, 2, 11)
+        # 2. Affichage du texte du tour
+        texte = "TOUR: BLANC" if self.turn == 1 else "TOUR: NOIR"
+        couleur = 7 if self.turn == 1 else 13
+        pyxel.text(5, 3, texte, couleur)
 
         for piece in self.pieces:
             piece.draw()
-
-
 
 
 game = Game()
