@@ -261,12 +261,15 @@ class Game:
     def draw(self):
         self.chessboard.draw()
         
-        # Affichage du texte du tour (en haut à gauche)
+        # Affichage du tour
         texte = "TOUR: BAS" if self.turn == 1 else "TOUR: HAUT"
         couleur = 7 if self.turn == 1 else 13
-        pyxel.text(4, 4, texte, couleur)
+        pyxel.text(5, 5, texte, couleur)
 
-        # Dessin des pièces (les points verts de valid.moves sont supprimés d'ici)
+        # Mouvements valides (optionnel mais recommandé)
+        for mx, my in self.valid.moves:
+            pyxel.circ(mx * TILE + 8, my * TILE + 8, 2, 11)
+
         for piece in self.pieces:
             piece.draw()
 
