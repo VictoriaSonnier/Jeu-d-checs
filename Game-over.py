@@ -246,13 +246,36 @@ class Game:
             self.ia_move()
 
     def execute_move(self, piece, x, y):
-     
+    
+        old_x, old_y = piece.x, piece.y
         target = self.is_occupied(x, y)
+        
+        
         if target:
             self.pieces.remove(target)
         piece.x = x
         piece.y = y
-        self.turn = 1 - self.turn
+        
+
+        en_echec = False
+        
+        for p in self.pieces:
+            if isinstance(p, King) and p.is_bottom_player == piece.is_bottom_player:
+                if self.attaque(p, self.pieces):
+                    en_echec = True
+                    break
+        
+       
+        if en_echec:
+            
+            piece.x, piece.y = old_x, old_y
+            if target:
+                self.pieces.append(target)
+            return 
+        else:
+           
+            self.turn = 1 - self.turn
+            return True 
 
     def ia_move(self):
     
