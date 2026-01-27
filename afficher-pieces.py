@@ -40,6 +40,7 @@ class Valid:
 
     def add(self, x, y):
         self.moves.append((x, y))
+
 class Piece:
     def __init__(self, x, y, u, bot=False):
         self.x = x
@@ -50,20 +51,7 @@ class Piece:
 
     def draw(self):
         pyxel.blt(self.x * TILE, self.y * TILE, 0, self.u, self.v, 16, 16, 0)
-<<<<<<< HEAD
 
-class Valid:
-    def __init__(self):
-        self.moves = [] 
-
-    def clear(self):
-        self.moves = []
-
-    def add(self, x, y):
-        self.moves.append((x, y))
-
-=======
->>>>>>> 5d040026fb3d1889975636f6e57e1cd96b059d84
 
 class Pawn(Piece):
     def __init__(self, x, y, bot=False):
@@ -91,60 +79,50 @@ class Pawn(Piece):
 
         return moves
 
-
-    def valid_moves(self, pieces):
-        moves = []
-    
-        direction = -1 if self.is_bottom_player else 1
-
-        
-        nx, ny = self.x, self.y + direction
-        if 0 <= ny <= 7:
-            if not any(p.x == nx and p.y == ny for p in pieces):
-                moves.append((nx, ny))
-                
-                
-                y_depart = 6 if self.is_bottom_player else 1
-                if self.y == y_depart:
-                    nx2, ny2 = self.x, self.y + 2 * direction
-                    if not any(p.x == nx2 and p.y == ny2 for p in pieces):
-                        moves.append((nx2, ny2))
-
-        
-        for dx in [-1, 1]:
-            nx, ny = self.x + dx, self.y + direction
-            if 0 <= nx <= 7 and 0 <= ny <= 7:
-                
-                cible = next((p for p in pieces if p.x == nx and p.y == ny), None)
-                # On ne l'ajoute que si c'est un ENNEMI
-                if cible and cible.is_bottom_player != self.is_bottom_player:
-                    moves.append((nx, ny))
-
-        return moves
-
-
 class Rook(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 16, bot)
 
-    def valid_moves(self,pieces):
-        moves=[]
-        dir=[(-1,0),(1,0),(0,-1),(0,1)]
-        for dx, dy in dir:
-            x = self.x
-            y = self.y
+    def valid_moves(self, pieces):
+        moves = []
+
+        dirs = [(1,0), (-1,0), (0,1), (0,-1)]
+
+        for dx, dy in dirs:
+            x, y = self.x, self.y
             while True:
                 x += dx
                 y += dy
-                if not (0<=x<8) and (0<=y<8):
+                if not (0 <= x < 8 and 0 <= y < 8):
                     break
-            if 
+                blocker = next((p for p in pieces if p.x == x and p.y == y), None)
+                if blocker:
+                    if blocker.is_bottom_player != self.is_bottom_player:
+                        moves.append((x, y)) 
+                    break
+                moves.append((x, y))
+
+        return moves
 
     
 
 class Knight(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 32, bot)
+    def valid_moves(self, pieces):
+        moves = []
+        jumps = [(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)]
+
+        for dx, dy in jumps:
+            x = self.x + dx
+            y = self.y + dy
+            if 0 <= x < 8 and 0 <= y < 8:
+                blocker = next((p for p in pieces if p.x == x and p.y == y), None)
+                if not blocker or blocker.is_bottom_player != self.is_bottom_player:
+                    moves.append((x, y))
+
+        return moves
+
     
 class Bishop(Piece):
     def __init__(self, x, y, bot=False):
@@ -166,6 +144,7 @@ class Bishop(Piece):
                         moves.append((x, y))
                     break
                 moves.append((x, y))
+
         return moves
 
 class Queen(Piece):
@@ -188,11 +167,27 @@ class Queen(Piece):
                         moves.append((x, y))
                     break
                 moves.append((x, y))
+
         return moves
 
 class King(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 80, bot)
+
+    def valid_moves(self, pieces):
+        moves = []
+        dirs = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(1,-1),(-1,1),(-1,-1)]
+
+        for dx, dy in dirs:
+            x = self.x + dx
+            y = self.y + dy
+            if 0 <= x < 8 and 0 <= y < 8:
+                blocker = next((p for p in pieces if p.x == x and p.y == y), None)
+                if not blocker or blocker.is_bottom_player != self.is_bottom_player:
+                    moves.append((x, y))
+
+        return moves
+
 
 
 class Game:
@@ -221,27 +216,9 @@ class Game:
         ]
         pyxel.mouse(visible=True)
         self.p=None
-        
-    
-                    
-
-        
-    
 
     def start(self):
         pyxel.run(self.update, self.draw)
-<<<<<<< HEAD
-
-    def update(self):
-        self.chessboard.update()
-        for p in self.pieces:
-            self.valid.clear()
-            for x, y in p.valid_moves(self.pieces):
-                self.valid.add(x, y)
-
-            
-
-=======
     
     def is_occupied(self,x,y):
         for p in self.pieces:
@@ -253,14 +230,22 @@ class Game:
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT): # clic unique 
             x = pyxel.mouse_x // TILE 
             y = pyxel.mouse_y // TILE 
+
             if self.p is None: 
                 self.p = self.is_occupied(x, y)
-                self.valid.clear() 
-            elif (x,y) in p.valid_moves(self.pieces): 
+                if self.p:
+                    self.valid.moves = self.p.valid_moves(self.pieces)
+                return
+            
+            if (x,y) in self.valid.moves:
+                target = self.is_occupied(x, y)
+                if target and target.is_bottom_player != self.p.is_bottom_player:
+                    self.pieces.remove(target)
                 self.p.x = x 
                 self.p.y = y 
-                self.p = None 
->>>>>>> 5d040026fb3d1889975636f6e57e1cd96b059d84
+            self.p = None 
+            self.valid.clear()
+
     def draw(self):
         self.chessboard.draw()
         for piece in self.pieces:
@@ -269,13 +254,5 @@ class Game:
 
 
 
-<<<<<<< HEAD
-=======
-            
-
-
-
-
->>>>>>> 5d040026fb3d1889975636f6e57e1cd96b059d84
 game = Game()
 game.start()
