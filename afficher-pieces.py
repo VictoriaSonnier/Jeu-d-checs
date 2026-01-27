@@ -109,6 +109,7 @@ class Rook(Piece):
 class Knight(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 32, bot)
+
     def valid_moves(self, pieces):
         moves = []
         jumps = [(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)]
@@ -235,6 +236,9 @@ class Game:
                 self.p = self.is_occupied(x, y)
                 if self.p:
                     self.valid.moves = self.p.valid_moves(self.pieces)
+                    print("valid:", self.valid.moves)
+                else:
+                    self.valid.clear()
                 return
             
             if (x,y) in self.valid.moves:
