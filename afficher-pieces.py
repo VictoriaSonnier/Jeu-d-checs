@@ -59,7 +59,7 @@ class Pawn(Piece):
         
     def valid_moves(self, pieces):
         moves = []
-        direction = 1 if self.is_bottom_player else -1
+        direction = -1 if self.is_bottom_player else 1
 
         nx = self.x
         ny = self.y + direction
