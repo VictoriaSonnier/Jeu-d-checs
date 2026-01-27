@@ -150,7 +150,7 @@ class Bishop(Piece):
 
 class Queen(Piece):
     def __init__(self, x, y, bot=False):
-        super().__init__(x, y, 64, bot)
+        super().__init__(x, y, 80, bot)
     
     def valid_moves(self, pieces):
         moves = []
@@ -173,7 +173,7 @@ class Queen(Piece):
 
 class King(Piece):
     def __init__(self, x, y, bot=False):
-        super().__init__(x, y, 80, bot)
+        super().__init__(x, y, 64, bot)
 
     def valid_moves(self, pieces):
         moves = []
