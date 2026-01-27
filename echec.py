@@ -193,7 +193,7 @@ class King(Piece):
 
 class Game:
     def __init__(self):
-        self.turn=1
+        self.turn=1 # Ajout de la gestion du tour
         pyxel.init(SIDE * TILE, SIDE * TILE, title="Echecs")
         try:
             pyxel.load("res.pyxres")
