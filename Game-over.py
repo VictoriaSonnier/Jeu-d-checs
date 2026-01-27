@@ -31,6 +31,10 @@ class Chessboard:
             pyxel.rect(30, 50, 70, 30, 6)
             pyxel.rectb(30, 50, 70, 30, 7)
             pyxel.text(50, 55, "GAME OVER", 0)
+            if self.winner=="BLANC":
+                pyxel.text(45, 65, "WINNER BLANC", 0)
+            else:
+                pyxel.text(45, 65, "WINNER NOIR", 0)
 class Valid:
     def __init__(self):
         self.moves = [] 
@@ -258,7 +262,7 @@ class Game:
         pieces_joueur = [p for p in self.pieces if p.is_bottom_player == joueur]
         
         for p in pieces_joueur:
-            moves = p.valid_moves(self.pieces)
+            moves = p.valid_moves(self.pieces,game)
             old_x, old_y = p.x, p.y
             
             for dx, dy in moves:
