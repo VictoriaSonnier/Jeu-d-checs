@@ -52,34 +52,55 @@ class Piece:
     def draw(self):
         pyxel.blt(self.x * TILE, self.y * TILE, 0, self.u, self.v, 16, 16, 0)
 
-
 class Pawn(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 0, bot)
-        
-    def valid_moves(self, pieces):
-        moves = []
-        direction = -1 if self.is_bottom_player else 1
-        nx, ny = self.x, self.y + direction
 
-    
-        if 0 <= ny <= 7:
-            # Avancer
-            if not any(p.x == nx and p.y == ny for p in pieces):
-                moves.append((nx, ny))
-            # Captures
-            for dx in [-1, 1]:
-                if 0 <= nx + dx <= 7:
-                    target = next((p for p in pieces if p.x == nx + dx and p.y == ny), None)
-                    if target and target.is_bottom_player != self.is_bottom_player:
-                        moves.append((nx + dx, ny))
+        
+    def valid_moves(self, pieces,game):
+        moves = []
+        start_row = 6 if self.is_bottom_player else 1
+        direction = -1 if self.is_bottom_player else 1
+
+        nx = self.x
+        ny = self.y + direction
+
+        if not any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+        
+        if self.y == start_row:
+            nx1 = self.x
+            ny1 = self.y + direction
+            nx2 = self.x
+            ny2 = self.y + 2 * direction
+            if (not any(p.x == nx1 and p.y == ny1 for p in pieces)
+                and not any(p.x == nx2 and p.y == ny2 for p in pieces)):
+                moves.append((nx2, ny2))
+
+
+        for dx in (-1, 1):
+            nx = self.x + dx
+            ny = self.y + direction
+            if 0 <= nx < 8 and 0 <= ny < 8:
+                target = next((p for p in pieces if p.x == nx and p.y == ny), None)
+                if target and target.is_bottom_player != self.is_bottom_player:
+                    moves.append((nx, ny))
+
+        for dx in (-1, 1):
+            nx = self.x + dx
+            ny = self.y + direction
+            if game.en_passant == (nx, ny):
+                coté = next((p for p in pieces if p.x == nx and p.y == self.y), None)
+                if coté and isinstance(coté, Pawn) and coté.is_bottom_player != self.is_bottom_player:
+                    moves.append((nx, ny))
+
         return moves
-    
+
 class Rook(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 16, bot)
 
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
 
         dirs = [(1,0), (-1,0), (0,1), (0,-1)]
@@ -106,7 +127,7 @@ class Knight(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 48, bot)
 
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
         jumps = [(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)]
 
@@ -125,7 +146,7 @@ class Bishop(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 32, bot)
     
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         for dx, dy in directions:
@@ -148,7 +169,7 @@ class Queen(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 80, bot)
     
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)]
         for dx, dy in directions:
@@ -171,7 +192,7 @@ class King(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 64, bot)
 
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
         dirs = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(1,-1),(-1,1),(-1,-1)]
 
@@ -200,6 +221,7 @@ class Game:
         self.pieces = []
         self.valid = Valid()
         self.selected_piece = None
+        self.en_passant=None
 
         self.pieces += [Pawn(i, 1) for i in range(SIDE)]
         self.pieces += [
@@ -223,10 +245,11 @@ class Game:
             if p.x==x and p.y==y:
                 return p
         return None
-    def attaque(self,piece,pieces):
-        for p in pieces:
-            if p.is_bottom_player!=piece.is_bottom_player:
-                if (piece.x,piece.y) in  p.valid_moves(pieces):
+    
+    def attaque(self,p,pieces):
+        for p1 in pieces:
+            if p.is_bottom_player!=p1.is_bottom_player:
+                if (p.x,p.y) in  p.valid_moves(pieces,self):
                     return True
         return False
     def echec_et_mat(self, joueur):
@@ -270,13 +293,36 @@ class Game:
                 y = pyxel.mouse_y // TILE
 
                 if self.p is None:
-                    temp_p = self.is_occupied(x, y)
-                    if temp_p and temp_p.is_bottom_player:
-                        self.p = temp_p
-                        self.valid.moves = self.p.valid_moves(self.pieces)
+                    temp = self.is_occupied(x, y)
+                    if temp and temp.is_bottom_player:
+                        self.p = temp
+                        self.valid.moves = self.p.valid_moves(self.pieces, self)
+                        print("valid:", self.valid.moves)
+                    else:
+                        self.p = None
+                        self.valid.clear()
                 else:
                     if (x, y) in self.valid.moves:
-                        self.execute_move(self.p, x, y)
+                        old_x = self.p.x
+                        old_y = self.p.y
+
+                        if isinstance(self.p, Pawn) and self.en_passant == (x, y):
+                            target_y = y + (1 if self.p.is_bottom_player else -1)
+                            target = self.is_occupied(x, target_y)
+                            if target:
+                                self.pieces.remove(target)
+                                self.execute_move(self.p, x, y)
+                        else:
+                            self.execute_move(self.p, x, y)
+
+                        if isinstance(self.p, Pawn):
+                            if abs(self.p.y - old_y) == 2:
+                                self.en_passant = (self.p.x, (self.p.y + old_y) // 2)
+                            else:
+                                self.en_passant = None
+                        else:
+                            self.en_passant = None
+
                     self.p = None
                     self.valid.clear()
 
@@ -285,30 +331,26 @@ class Game:
             
             self.ia_move()
 
-    def execute_move(self, piece, x, y):
+    def execute_move(self, p, x, y):
     
-        old_x, old_y = piece.x, piece.y
+        old_x, old_y = p.x, p.y
         target = self.is_occupied(x, y)
-        
         
         if target:
             self.pieces.remove(target)
-        piece.x = x
-        piece.y = y
+        p.x = x
+        p.y = y
         
-
         en_echec = False
         
-        for p in self.pieces:
-            if isinstance(p, King) and p.is_bottom_player == piece.is_bottom_player:
-                if self.attaque(p, self.pieces):
+        for p1 in self.pieces:
+            if isinstance(p1, King) and p1.is_bottom_player == p.is_bottom_player:
+                if self.attaque(p1, self.pieces):
                     en_echec = True
                     break
         
-       
         if en_echec:
-            
-            piece.x, piece.y = old_x, old_y
+            p.x, p.y = old_x, old_y
             if target:
                 self.pieces.append(target)
             return 
@@ -327,7 +369,7 @@ class Game:
         random.shuffle(ia_pieces) # Mélange pour ne pas toujours tester les mêmes
 
         for p in ia_pieces:
-            moves = p.valid_moves(self.pieces)
+            moves = p.valid_moves(self.pieces,self)
             if moves:
                 # Si la pièce a des coups possibles on en choisit un au hasard
                 dest_x, dest_y = random.choice(moves)
