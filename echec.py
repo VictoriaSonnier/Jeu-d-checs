@@ -229,41 +229,44 @@ class Game:
         return None
     
     def update(self): 
-        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT): # clic unique 
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT): 
             x = pyxel.mouse_x // TILE 
             y = pyxel.mouse_y // TILE 
 
             if self.p is None: 
-                self.p = self.is_occupied(x, y)
-                if self.p:
+                temp_p = self.is_occupied(x, y)
+                # On ne sélectionne que si c'est le tour du bon joueur
+                if temp_p and temp_p.is_bottom_player == (self.turn == 1):
+                    self.p = temp_p
                     self.valid.moves = self.p.valid_moves(self.pieces)
-                    print("valid:", self.valid.moves)
                 else:
                     self.valid.clear()
                 return
             
-            if (x,y) in self.valid.moves:
+            # Si une pièce est déjà sélectionnée, on tente le mouvement
+            if (x, y) in self.valid.moves:
                 target = self.is_occupied(x, y)
                 if target and target.is_bottom_player != self.p.is_bottom_player:
                     self.pieces.remove(target)
+                
                 self.p.x = x 
                 self.p.y = y 
-                self.turn = 1 - self.turn
+                # Changement de tour
+                self.turn = 1 - self.turn 
+
+            # Reset de la sélection après l'action
             self.p = None 
             self.valid.clear()
 
     def draw(self):
         self.chessboard.draw()
         
-        # Affichage du tour
+        # Affichage du texte du tour (en haut à gauche)
         texte = "TOUR: BAS" if self.turn == 1 else "TOUR: HAUT"
         couleur = 7 if self.turn == 1 else 13
-        pyxel.text(5, 5, texte, couleur)
+        pyxel.text(4, 4, texte, couleur)
 
-        # Mouvements valides (optionnel mais recommandé)
-        for mx, my in self.valid.moves:
-            pyxel.circ(mx * TILE + 8, my * TILE + 8, 2, 11)
-
+        # Dessin des pièces (les points verts de valid.moves sont supprimés d'ici)
         for piece in self.pieces:
             piece.draw()
 
