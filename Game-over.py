@@ -223,7 +223,13 @@ class Game:
             if p.x==x and p.y==y:
                 return p
         return None
-    
+    def attaque(self,piece,pieces):
+        for p in pieces:
+            if p.is_bottom_player!=piece.is_bottom_player:
+                if (piece.x,piece.y) in  p.valid_moves(pieces):
+                    return True
+        return False
+
     def update(self):
         if self.turn == 1:
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
@@ -293,18 +299,19 @@ class Game:
     def draw(self):
         self.chessboard.draw()
         
-       
-        pyxel.rect(0, 0, 50, 10, 0) 
-        pyxel.rectb(0, 0, 50, 10, 7) 
 
-   
-        texte = "TOUR: BLANC" if self.turn == 1 else "TOUR: NOIR"
-        couleur = 7 if self.turn == 1 else 13
-        pyxel.text(5, 3, texte, couleur)
-
+        
+        # cadre autour des pièces que l'on peut manger
+        for piece in self.pieces:
+            
+            if piece.is_bottom_player != (self.turn == 1):
+                
+                if self.attaque(piece, self.pieces):
+                    
+                    pyxel.rectb(piece.x * TILE, piece.y * TILE, TILE, TILE, 8)
         for mx, my in self.valid.moves:
             pyxel.circ(mx * TILE + 8, my * TILE + 8, 2, 11)
-
+    
         for piece in self.pieces:
             piece.draw()
 
