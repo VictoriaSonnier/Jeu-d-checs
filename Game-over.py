@@ -1,5 +1,5 @@
 import pyxel
-
+import random
 TILE = 16
 SIDE = 8
 BLACK = 0
@@ -60,25 +60,21 @@ class Pawn(Piece):
     def valid_moves(self, pieces):
         moves = []
         direction = -1 if self.is_bottom_player else 1
+        nx, ny = self.x, self.y + direction
 
-        nx = self.x
-        ny = self.y + direction
-
-        if not any(p.x == nx and p.y == ny for p in pieces):
-            moves.append((nx, ny))
-
-        nx = self.x - 1
-        ny = self.y + direction
-        if any(p.x == nx and p.y == ny for p in pieces):
-            moves.append((nx, ny))
-
-        nx = self.x + 1
-        ny = self.y + direction
-        if any(p.x == nx and p.y == ny for p in pieces):
-            moves.append((nx, ny))
-
+    
+        if 0 <= ny <= 7:
+            # Avancer
+            if not any(p.x == nx and p.y == ny for p in pieces):
+                moves.append((nx, ny))
+            # Captures
+            for dx in [-1, 1]:
+                if 0 <= nx + dx <= 7:
+                    target = next((p for p in pieces if p.x == nx + dx and p.y == ny), None)
+                    if target and target.is_bottom_player != self.is_bottom_player:
+                        moves.append((nx + dx, ny))
         return moves
-
+    
 class Rook(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 16, bot)
@@ -228,35 +224,48 @@ class Game:
                 return p
         return None
     
-    def update(self): 
-        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT): 
-            x = pyxel.mouse_x // TILE 
-            y = pyxel.mouse_y // TILE 
+    def update(self):
+        if self.turn == 1:
+            if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+                x = pyxel.mouse_x // TILE
+                y = pyxel.mouse_y // TILE
 
-            if self.p is None: 
-                temp_p = self.is_occupied(x, y)
-                # On ne sélectionne que si c'est le tour du bon joueur
-                if temp_p and temp_p.is_bottom_player == (self.turn == 1):
-                    self.p = temp_p
-                    self.valid.moves = self.p.valid_moves(self.pieces)
+                if self.p is None:
+                    temp_p = self.is_occupied(x, y)
+                    if temp_p and temp_p.is_bottom_player:
+                        self.p = temp_p
+                        self.valid.moves = self.p.valid_moves(self.pieces)
                 else:
+                    if (x, y) in self.valid.moves:
+                        self.execute_move(self.p, x, y)
+                    self.p = None
                     self.valid.clear()
-                return
-            
-            # Si une pièce est déjà sélectionnée, on tente le mouvement
-            if (x, y) in self.valid.moves:
-                target = self.is_occupied(x, y)
-                if target and target.is_bottom_player != self.p.is_bottom_player:
-                    self.pieces.remove(target)
-                
-                self.p.x = x 
-                self.p.y = y 
-                # Changement de tour
-                self.turn = 1 - self.turn 
 
-            # Reset de la sélection après l'action
-            self.p = None 
-            self.valid.clear()
+       #IA
+        elif self.turn == 0:
+            self.ia_move()
+
+    def execute_move(self, piece, x, y):
+     
+        target = self.is_occupied(x, y)
+        if target:
+            self.pieces.remove(target)
+        piece.x = x
+        piece.y = y
+        self.turn = 1 - self.turn
+
+    def ia_move(self):
+    
+        ia_pieces = [p for p in self.pieces if not p.is_bottom_player]
+        random.shuffle(ia_pieces) # Mélange pour ne pas toujours tester les mêmes
+
+        for p in ia_pieces:
+            moves = p.valid_moves(self.pieces)
+            if moves:
+                # Si la pièce a des coups possibles on en choisit un au hasard
+                dest_x, dest_y = random.choice(moves)
+                self.execute_move(p, dest_x, dest_y)
+                return 
 
     def draw(self):
         self.chessboard.draw()
@@ -265,10 +274,13 @@ class Game:
         pyxel.rect(0, 0, 50, 10, 0) 
         pyxel.rectb(0, 0, 50, 10, 7) 
 
-        # 2. Affichage du texte du tour
+   
         texte = "TOUR: BLANC" if self.turn == 1 else "TOUR: NOIR"
         couleur = 7 if self.turn == 1 else 13
         pyxel.text(5, 3, texte, couleur)
+
+        for mx, my in self.valid.moves:
+            pyxel.circ(mx * TILE + 8, my * TILE + 8, 2, 11)
 
         for piece in self.pieces:
             piece.draw()
