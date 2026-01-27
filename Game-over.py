@@ -229,9 +229,32 @@ class Game:
                 if (piece.x,piece.y) in  p.valid_moves(pieces):
                     return True
         return False
+    def echec_et_mat(self,pieces,bot):
+        for p in pieces:
+            if p.is_bottom_player==bot:
+                old_x=p.x
+                old_y=p.y
+                for dx,dy in p.valid_moves(pieces):
+                    p.x=dx
+                    p.y=dy
+                    for p1 in pieces:
+                        if isinstance(p1, King) and p1.is_bottom_player == bot:
+                            roi=p1
+                    if not self.attaque(roi, pieces):
+                        return False       
+                    else:
+                        p.x=old_x
+                        p.y=old_y
+        print("Perdu")
+        return True                   
+
+                    
+
+
 
     def update(self):
         if self.turn == 1:
+            
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
                 x = pyxel.mouse_x // TILE
                 y = pyxel.mouse_y // TILE
@@ -249,6 +272,7 @@ class Game:
 
        #IA
         elif self.turn == 0:
+            
             self.ia_move()
 
     def execute_move(self, piece, x, y):
