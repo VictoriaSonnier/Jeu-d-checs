@@ -57,7 +57,7 @@ class Pawn(Piece):
         super().__init__(x, y, 0, bot)
 
         
-    def valid_moves(self, pieces,game):
+    def valid_moves(self, pieces, game):
         moves = []
         start_row = 6 if self.is_bottom_player else 1
         direction = -1 if self.is_bottom_player else 1
@@ -248,9 +248,10 @@ class Game:
     
     def attaque(self,p,pieces):
         for p1 in pieces:
-            if p.is_bottom_player!=p1.is_bottom_player:
-                if (p.x,p.y) in  p.valid_moves(pieces,self):
+            if p1.is_bottom_player!=p.is_bottom_player:
+                if (p.x,p.y) in  p1.valid_moves(pieces,self):
                     return True
+                
         return False
     def echec_et_mat(self,pieces,bot):
         for p in pieces:
@@ -316,7 +317,6 @@ class Game:
                     self.p = None
                     self.valid.clear()
 
-       #IA
         elif self.turn == 0:
             
             self.ia_move()
