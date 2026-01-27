@@ -108,7 +108,7 @@ class Rook(Piece):
 
 class Knight(Piece):
     def __init__(self, x, y, bot=False):
-        super().__init__(x, y, 32, bot)
+        super().__init__(x, y, 48, bot)
 
     def valid_moves(self, pieces):
         moves = []
@@ -127,7 +127,7 @@ class Knight(Piece):
     
 class Bishop(Piece):
     def __init__(self, x, y, bot=False):
-        super().__init__(x, y, 48, bot)
+        super().__init__(x, y, 32, bot)
     
     def valid_moves(self, pieces):
         moves = []
@@ -212,8 +212,8 @@ class Game:
 
         self.pieces += [Pawn(i, 6, True) for i in range(SIDE)]
         self.pieces += [
-            Rook(0, 7, True), Knight(1, 7, True), Bishop(2, 7, True), Queen(3, 7, True),
-            King(4, 7, True), Bishop(5, 7, True), Knight(6, 7, True), Rook(7, 7, True)
+            Rook(0, 7, True), Knight(2, 7, True), Bishop(1, 7, True), Queen(3, 7, True),
+            King(4, 7, True), Bishop(6, 7, True), Knight(5, 7, True), Rook(7, 7, True)
         ]
         pyxel.mouse(visible=True)
         self.p=None
