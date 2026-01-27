@@ -229,9 +229,42 @@ class Game:
                 if (piece.x,piece.y) in  p.valid_moves(pieces):
                     return True
         return False
+    def echec_et_mat(self, joueur):
+        
+        pieces_joueur = [p for p in self.pieces if p.is_bottom_player == joueur]
+        
+        for p in pieces_joueur:
+            moves = p.valid_moves(self.pieces)
+            old_x, old_y = p.x, p.y
+            
+            for dx, dy in moves:
+                
+                target = self.is_occupied(dx, dy)
+                if target: self.pieces.remove(target)
+                p.x, p.y = dx, dy
+                
+                
+                roi = next(p1 for p1 in self.pieces if isinstance(p1, King) and p1.is_bottom_player == joueur)
+                
+               
+                en_danger = self.attaque(roi, self.pieces)
+                
+                
+                p.x, p.y = old_x, old_y
+                if target: self.pieces.append(target)
+                
+                if not en_danger:
+                    return False 
+                    
+        return True                 
+
+                    
+
+
 
     def update(self):
         if self.turn == 1:
+            
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
                 x = pyxel.mouse_x // TILE
                 y = pyxel.mouse_y // TILE
@@ -249,6 +282,7 @@ class Game:
 
        #IA
         elif self.turn == 0:
+            
             self.ia_move()
 
     def execute_move(self, piece, x, y):
@@ -278,10 +312,14 @@ class Game:
             if target:
                 self.pieces.append(target)
             return 
+        
         else:
-           
             self.turn = 1 - self.turn
-            return True 
+            # Vérifier si le joueur qui doit jouer est mat
+            if self.echec_et_mat(self.turn == 1):
+                self.chessboard.game_over = True
+                self.chessboard.winner = "NOIR" if self.turn == 1 else "BLANC"
+            return True
 
     def ia_move(self):
     
@@ -299,19 +337,18 @@ class Game:
     def draw(self):
         self.chessboard.draw()
         
+       
+        pyxel.rect(0, 0, 50, 10, 0) 
+        pyxel.rectb(0, 0, 50, 10, 7) 
 
-        
-        # cadre autour des pièces que l'on peut manger
-        for piece in self.pieces:
-            
-            if piece.is_bottom_player != (self.turn == 1):
-                
-                if self.attaque(piece, self.pieces):
-                    
-                    pyxel.rectb(piece.x * TILE, piece.y * TILE, TILE, TILE, 8)
+   
+        texte = "TOUR: BLANC" if self.turn == 1 else "TOUR: NOIR"
+        couleur = 7 if self.turn == 1 else 13
+        pyxel.text(5, 3, texte, couleur)
+
         for mx, my in self.valid.moves:
             pyxel.circ(mx * TILE + 8, my * TILE + 8, 2, 11)
-    
+
         for piece in self.pieces:
             piece.draw()
 

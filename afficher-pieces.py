@@ -56,15 +56,22 @@ class Piece:
 class Pawn(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 0, bot)
+
         
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
+        start_row = 6 if self.is_bottom_player else 1
         direction = -1 if self.is_bottom_player else 1
 
         nx = self.x
         ny = self.y + direction
 
         if not any(p.x == nx and p.y == ny for p in pieces):
+            moves.append((nx, ny))
+        
+        if self.y==start_row:
+            nx = self.x
+            ny = self.y + 2*direction
             moves.append((nx, ny))
 
         for dx in (-1, 1):
@@ -75,6 +82,13 @@ class Pawn(Piece):
                 if target and target.is_bottom_player != self.is_bottom_player:
                     moves.append((nx, ny))
 
+        for dx in (-1, 1):
+            nx = self.x + dx
+            ny = self.y + direction
+            if game.en_passant == (nx, ny):
+                coté = next((p for p in pieces if p.x == nx and p.y == self.y), None)
+                if coté and isinstance(coté, Pawn) and coté.is_bottom_player != self.is_bottom_player:
+                    moves.append((nx, ny))
 
         return moves
 
@@ -207,6 +221,7 @@ class Game:
         self.pieces = []
         self.valid = Valid()
         self.selected_piece = None
+        self.en_passant=None
 
         self.pieces += [Pawn(i, 1) for i in range(SIDE)]
         self.pieces += [
@@ -216,8 +231,8 @@ class Game:
 
         self.pieces += [Pawn(i, 6, True) for i in range(SIDE)]
         self.pieces += [
-            Rook(0, 7, True), Knight(2, 7, True), Bishop(1, 7, True), Queen(3, 7, True),
-            King(4, 7, True), Bishop(6, 7, True), Knight(5, 7, True), Rook(7, 7, True)
+            Rook(0, 7, True), Knight(1, 7, True), Bishop(2, 7, True), Queen(3, 7, True),
+            King(4, 7, True), Bishop(5, 7, True), Knight(6, 7, True), Rook(7, 7, True)
         ]
         pyxel.mouse(visible=True)
         self.p=None
@@ -232,33 +247,38 @@ class Game:
         return None
     
     def update(self): 
-        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT): # clic unique 
+
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
             x = pyxel.mouse_x // TILE 
             y = pyxel.mouse_y // TILE 
 
             if self.p is None: 
                 self.p = self.is_occupied(x, y)
                 if self.p:
-                    self.valid.moves = self.p.valid_moves(self.pieces)
+                    self.valid.moves = self.p.valid_moves(self.pieces,self)
                     print("valid:", self.valid.moves)
                 else:
                     self.valid.clear()
                 return
-            
+            self.valid.moves = self.p.valid_moves(self.pieces, self)
+
             if (x,y) in self.valid.moves:
+                old_x = self.p.x
+                old_y = self.p.y
+                 
+                if isinstance(self.p, Pawn) and self.en_passant == (x, y):
+                    target_y = y + (1 if self.p.is_bottom_player else -1)
+                    target = self.is_occupied(x, target_y)
+                    if target:
+                        self.pieces.remove(target)
+
                 target = self.is_occupied(x, y)
                 x1=self.p.x
                 y1=self.p.y
                 if target and target.is_bottom_player != self.p.is_bottom_player:
                     self.pieces.remove(target)
                 self.p.x = x 
-                self.p.y = y
-                for p1 in self.pieces:
-                    if isinstance(p1,King) and p1.is_bottom_player==self.p.is_bottom_player:
-                        if p1.echec_au_roi(self.pieces):
-                            self.p.x=x1
-                            self.p.y=y1
-
+                self.p.y = y 
             self.p = None 
             self.valid.clear()
 
