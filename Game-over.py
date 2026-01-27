@@ -223,7 +223,13 @@ class Game:
             if p.x==x and p.y==y:
                 return p
         return None
-    
+    def attaque(self,piece,pieces):
+        for p in pieces:
+            if p.is_bottom_player!=piece.is_bottom_player:
+                if (piece.x,piece.y) in  p.valid_moves(pieces):
+                    return True
+        return False
+
     def update(self):
         if self.turn == 1:
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
