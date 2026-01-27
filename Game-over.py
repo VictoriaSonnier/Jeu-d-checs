@@ -253,24 +253,34 @@ class Game:
                     return True
                 
         return False
-    def echec_et_mat(self,pieces,bot):
-        for p in pieces:
-            if p.is_bottom_player==bot:
-                old_x=p.x
-                old_y=p.y
-                for dx,dy in p.valid_moves(pieces):
-                    p.x=dx
-                    p.y=dy
-                    for p1 in pieces:
-                        if isinstance(p1, King) and p1.is_bottom_player == bot:
-                            roi=p1
-                    if not self.attaque(roi, pieces):
-                        return False       
-                    else:
-                        p.x=old_x
-                        p.y=old_y
-        print("Perdu")
-        return True                   
+    def echec_et_mat(self, joueur):
+        
+        pieces_joueur = [p for p in self.pieces if p.is_bottom_player == joueur]
+        
+        for p in pieces_joueur:
+            moves = p.valid_moves(self.pieces)
+            old_x, old_y = p.x, p.y
+            
+            for dx, dy in moves:
+                
+                target = self.is_occupied(dx, dy)
+                if target: self.pieces.remove(target)
+                p.x, p.y = dx, dy
+                
+                
+                roi = next(p1 for p1 in self.pieces if isinstance(p1, King) and p1.is_bottom_player == joueur)
+                
+               
+                en_danger = self.attaque(roi, self.pieces)
+                
+                
+                p.x, p.y = old_x, old_y
+                if target: self.pieces.append(target)
+                
+                if not en_danger:
+                    return False 
+                    
+        return True                 
 
                     
 
@@ -344,10 +354,14 @@ class Game:
             if target:
                 self.pieces.append(target)
             return 
+        
         else:
-           
             self.turn = 1 - self.turn
-            return True 
+            # Vérifier si le joueur qui doit jouer est mat
+            if self.echec_et_mat(self.turn == 1):
+                self.chessboard.game_over = True
+                self.chessboard.winner = "NOIR" if self.turn == 1 else "BLANC"
+            return True
 
     def ia_move(self):
     
