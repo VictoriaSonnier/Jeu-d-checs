@@ -67,15 +67,14 @@ class Pawn(Piece):
         if not any(p.x == nx and p.y == ny for p in pieces):
             moves.append((nx, ny))
 
-        nx = self.x - 1
-        ny = self.y + direction
-        if any(p.x == nx and p.y == ny for p in pieces):
-            moves.append((nx, ny))
+        for dx in (-1, 1):
+            nx = self.x + dx
+            ny = self.y + direction
+            if 0 <= nx < 8 and 0 <= ny < 8:
+                target = next((p for p in pieces if p.x == nx and p.y == ny), None)
+                if target and target.is_bottom_player != self.is_bottom_player:
+                    moves.append((nx, ny))
 
-        nx = self.x + 1
-        ny = self.y + direction
-        if any(p.x == nx and p.y == ny for p in pieces):
-            moves.append((nx, ny))
 
         return moves
 
@@ -95,9 +94,9 @@ class Rook(Piece):
                 y += dy
                 if not (0 <= x < 8 and 0 <= y < 8):
                     break
-                blocker = next((p for p in pieces if p.x == x and p.y == y), None)
-                if blocker:
-                    if blocker.is_bottom_player != self.is_bottom_player:
+                cible = next((p for p in pieces if p.x == x and p.y == y), None)
+                if cible:
+                    if cible.is_bottom_player != self.is_bottom_player:
                         moves.append((x, y)) 
                     break
                 moves.append((x, y))
@@ -118,8 +117,8 @@ class Knight(Piece):
             x = self.x + dx
             y = self.y + dy
             if 0 <= x < 8 and 0 <= y < 8:
-                blocker = next((p for p in pieces if p.x == x and p.y == y), None)
-                if not blocker or blocker.is_bottom_player != self.is_bottom_player:
+                cible = next((p for p in pieces if p.x == x and p.y == y), None)
+                if not cible or cible.is_bottom_player != self.is_bottom_player:
                     moves.append((x, y))
 
         return moves
@@ -183,8 +182,8 @@ class King(Piece):
             x = self.x + dx
             y = self.y + dy
             if 0 <= x < 8 and 0 <= y < 8:
-                blocker = next((p for p in pieces if p.x == x and p.y == y), None)
-                if not blocker or blocker.is_bottom_player != self.is_bottom_player:
+                cible = next((p for p in pieces if p.x == x and p.y == y), None)
+                if not cible or cible.is_bottom_player != self.is_bottom_player:
                     moves.append((x, y))
 
         return moves
