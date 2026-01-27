@@ -96,7 +96,7 @@ class Rook(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 16, bot)
 
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces, game):
         moves = []
 
         dirs = [(1,0), (-1,0), (0,1), (0,-1)]
@@ -123,7 +123,7 @@ class Knight(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 48, bot)
 
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
         jumps = [(1,2),(2,1),(-1,2),(-2,1),(1,-2),(2,-1),(-1,-2),(-2,-1)]
 
@@ -142,7 +142,7 @@ class Bishop(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 32, bot)
     
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         for dx, dy in directions:
@@ -165,7 +165,7 @@ class Queen(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 80, bot)
     
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)]
         for dx, dy in directions:
@@ -188,7 +188,7 @@ class King(Piece):
     def __init__(self, x, y, bot=False):
         super().__init__(x, y, 64, bot)
 
-    def valid_moves(self, pieces):
+    def valid_moves(self, pieces,game):
         moves = []
         dirs = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(1,-1),(-1,1),(-1,-1)]
 
