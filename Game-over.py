@@ -31,6 +31,10 @@ class Chessboard:
             pyxel.rect(30, 50, 70, 30, 6)
             pyxel.rectb(30, 50, 70, 30, 7)
             pyxel.text(50, 55, "GAME OVER", 0)
+            if self.winner=="BLANC":
+                pyxel.text(45, 65, "WINNER BLANC", 0)
+            else:
+                pyxel.text(45, 65, "WINNER NOIR", 0)
 class Valid:
     def __init__(self):
         self.moves = [] 
