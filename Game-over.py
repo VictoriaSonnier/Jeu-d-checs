@@ -77,7 +77,6 @@ class Pawn(Piece):
                 and not any(p.x == nx2 and p.y == ny2 for p in pieces)):
                 moves.append((nx2, ny2))
 
-
         for dx in (-1, 1):
             nx = self.x + dx
             ny = self.y + direction
@@ -120,8 +119,6 @@ class Rook(Piece):
                 moves.append((x, y))
 
         return moves
-
-    
 
 class Knight(Piece):
     def __init__(self, x, y, bot=False):
@@ -231,8 +228,8 @@ class Game:
 
         self.pieces += [Pawn(i, 6, True) for i in range(SIDE)]
         self.pieces += [
-            Rook(0, 7, True), Knight(2, 7, True), Bishop(1, 7, True), Queen(3, 7, True),
-            King(4, 7, True), Bishop(6, 7, True), Knight(5, 7, True), Rook(7, 7, True)
+            Rook(0, 7, True), Knight(1, 7, True), Bishop(2, 7, True), Queen(3, 7, True),
+            King(4, 7, True), Bishop(5, 7, True), Knight(6, 7, True), Rook(7, 7, True)
         ]
         pyxel.mouse(visible=True)
         self.p=None
@@ -253,12 +250,21 @@ class Game:
                     return True
                 
         return False
+    
+    def is_square_attacked(self, x, y, bottom):
+        for p in self.pieces:
+            if p.is_bottom_player == bottom:
+                if (x, y) in p.valid_moves(self.pieces, self):
+                    return True
+        return False
+
+    
     def echec_et_mat(self, joueur):
         
         pieces_joueur = [p for p in self.pieces if p.is_bottom_player == joueur]
         
         for p in pieces_joueur:
-            moves = p.valid_moves(self.pieces)
+            moves = p.valid_moves(self.pieces,game)
             old_x, old_y = p.x, p.y
             
             for dx, dy in moves:
@@ -298,31 +304,20 @@ class Game:
                     if temp and temp.is_bottom_player:
                         self.p = temp
                         self.valid.moves = self.p.valid_moves(self.pieces, self)
-                        print("valid:", self.valid.moves)
+                        print("valid:", self.valid.moves, self.en_passant)
                     else:
                         self.p = None
                         self.valid.clear()
                 else:
                     if (x, y) in self.valid.moves:
-                        old_x = self.p.x
-                        old_y = self.p.y
-
                         if isinstance(self.p, Pawn) and self.en_passant == (x, y):
                             target_y = y + (1 if self.p.is_bottom_player else -1)
                             target = self.is_occupied(x, target_y)
+
                             if target:
                                 self.pieces.remove(target)
-                                self.execute_move(self.p, x, y)
-                        else:
-                            self.execute_move(self.p, x, y)
 
-                        if isinstance(self.p, Pawn):
-                            if abs(self.p.y - old_y) == 2:
-                                self.en_passant = (self.p.x, (self.p.y + old_y) // 2)
-                            else:
-                                self.en_passant = None
-                        else:
-                            self.en_passant = None
+                        self.execute_move(self.p, x, y)
 
                     self.p = None
                     self.valid.clear()
@@ -334,36 +329,44 @@ class Game:
     def execute_move(self, p, x, y):
     
         old_x, old_y = p.x, p.y
+
         target = self.is_occupied(x, y)
-        
+
         if target:
             self.pieces.remove(target)
+
         p.x = x
         p.y = y
-        
-        en_echec = False
+
+        if isinstance(p, Pawn):
+            if abs(p.y - old_y) == 2:
+                    self.en_passant = (p.x, (p.y + old_y) // 2)
+            else:
+                    self.en_passant = None
+
+            promotion_row = 0 if p.is_bottom_player else 7
+            if p.y == promotion_row:
+
+                self.pieces.remove(p)
+                self.pieces.append(Queen(p.x, p.y, p.is_bottom_player))
+                p = self.pieces[-1]
         
         for p1 in self.pieces:
             if isinstance(p1, King) and p1.is_bottom_player == p.is_bottom_player:
-                if self.attaque(p1, self.pieces):
-                    en_echec = True
-                    break
-        
-        if en_echec:
-            p.x, p.y = old_x, old_y
-            if target:
-                self.pieces.append(target)
-            return 
-        
-        else:
-            self.turn = 1 - self.turn
+                if self.is_square_attacked(p1.x, p1.y, bottom = not p1.is_bottom_player):
+                    p.x, p.y = old_x, old_y
+                    if target:
+                        self.pieces.append(target)
+                        return False
+
+        self.turn = 1 - self.turn
             # Vérifier si le joueur qui doit jouer est mat
-            if self.echec_et_mat(self.turn == 1):
+        if self.echec_et_mat(self.turn == 1):
                 self.chessboard.game_over = True
                 self.chessboard.winner = "NOIR" if self.turn == 1 else "BLANC"
-            return True
+        return True
 
-    def ia_move(self):
+    def random_move(self):
     
         ia_pieces = [p for p in self.pieces if not p.is_bottom_player]
         random.shuffle(ia_pieces) # Mélange pour ne pas toujours tester les mêmes
@@ -375,11 +378,53 @@ class Game:
                 dest_x, dest_y = random.choice(moves)
                 self.execute_move(p, dest_x, dest_y)
                 return 
+            
+    def save(self):
+        return {
+            "pieces": [type(p)(p.x, p.y, p.is_bottom_player) for p in self.pieces],
+            "turn": self.turn,
+            "en_passant": self.en_passant,
+        }
+
+    def load(self, state):
+        self.pieces = state["pieces"]
+        self.turn = state["turn"]
+        self.en_passant = state["en_passant"]
+
+
+            
+    def ia_move(self):
+
+        ia_pieces = [(i,p) for (i,p) in enumerate(self.pieces) if not p.is_bottom_player]
+        best_moves = []
+
+        for index, p in ia_pieces:
+            for (x, y) in p.valid_moves(self.pieces, self):
+                # Simuler le coup
+                saved_state = self.save()
+                self.execute_move(self.pieces[index], x, y)
+
+                # Vérifier si la pièce est attaquée après le coup
+                if not self.attaque(self.pieces[index], game.pieces):
+                    best_moves.append((index, x, y))
+
+                # Restaurer
+                self.load(saved_state)
+
+            # Si on a trouvé des coups "sûrs"
+        if best_moves:
+            index, x, y = random.choice(best_moves)
+            self.execute_move(self.pieces[index], x, y)
+            print("h")
+            return
+
+             # Sinon, fallback sur un coup aléatoire
+        return self.random_move()
 
     def draw(self):
+
         self.chessboard.draw()
         
-       
         pyxel.rect(0, 0, 50, 10, 0) 
         pyxel.rectb(0, 0, 50, 10, 7) 
 
